@@ -74,5 +74,33 @@ namespace ProductManagementSystem.Controllers
                 return StatusCode(500, $"Internal server error occurred: {ex.Message}");
             }
         }
+
+        [HttpPost("CreateProduct")]
+        public async Task<ActionResult<ProductDTO>> CreateProduct([FromBody] ProductCreateDTO productCreateDTO)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                Product product = _mapper.Map<Product>(productCreateDTO);
+
+                await _context.Products.AddAsync(product);
+
+                await _context.SaveChangesAsync();
+
+                // Retrieve and assign Category (if applicable)
+                product.Category = await _context.Categories.FirstOrDefaultAsync(ctg => ctg.CategoryId == product.CategoryId);
+
+                var productDTO = _mapper.Map<ProductDTO>(product);
+
+                return Ok(productDTO);
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error {ex.Message}");
+            }
+        }
     }
 }
